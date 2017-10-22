@@ -1,0 +1,889 @@
+{% load staticfiles %}
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>云平台自动化运维系统</title>
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+
+<!--
+   <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+   <script src="/scripts/jquery.min.js"></script>
+   <script src="/bootstrap/js/bootstrap.min.js"></script>
+-->
+</head>
+
+
+<body>
+
+<!--
+background="../static/images/glodon.jpg"
+<img src = "static/images/glodon.jpg" alt=""/>
+-->
+
+<img src = "static/images/glodon.jpg" >
+
+
+
+   <div class="container" style = "text-align:center;width:50%;height:4%; margin:0 auto">
+      <h1>云平台自动化运维系统</h1>
+      
+   </div>
+<br></br>
+
+  
+
+
+<div id="describe" style="float:left;width: 50%; height: 35%; margin: 0 auto">
+<p>
+
+<!--
+<br></br>
+-->
+
+<!--
+<h2 style="text-align:center">云平台自动化运维系统</h2>
+-->
+<!--
+<h2 style="text-align:center;font-size:16px;">网站简要描述</h2>
+-->
+
+<h3 style="text-align:center;font-size:16px;">功能：统计一段时间内集群的故障率</h3>
+<h3 style="text-align:center;font-size:16px;">图表类型：柱状图</h3>
+
+<h3 style="text-align:center;font-size:16px;">输入被监控设备IP，可展示对应设备的磁盘利用率、</h3>
+<h3 style="text-align:center;font-size:16px;">CPU负载、CPU利用率和内存使用率等实时信息</h3>
+<h3 style="text-align:center;font-size:16px;">图表类型：动态曲线图</h3>
+</p>
+</div>
+
+
+
+<div id="container" style="float:right;width: 50%; height: 35%; margin: 0 auto"></div>
+
+
+
+<div id = "down" >
+    <!--
+	<p>请输入目标设备IP</p>
+	-->
+	<form>
+		Agent IP:<!--<input type="text" id="ip_addr" name="ip_addr">--> <select id="ip_select"  name=""> <option value="">请选择</option><option   value="1">10.11.14.197</option><option   value="2">192.168.132.42</option>  </select>  <button type="button" id="sum">提交</button><br>
+		<!--
+		<button type="button" id="sum">提交</button>
+		-->
+                <!--
+                <select id="ip_select"  name=""> <option   value="1">10.11.14.197</option><option   value="2">192.168.132.42</option>  </select>
+                -->
+	</form>
+
+
+	<div id="container1" style="float:left;width: 25%; height: 40%; margin: 0 auto"></div>
+	<div id="container2" style="float:left;width: 25%; height: 40%; margin: 0 auto"></div>
+	<div id="container3" style="float:left;width: 25%; height: 40%; margin: 0 auto"></div>
+	<div id="container4" style="float:right;width: 25%; height: 40%; margin: 0 auto"></div>
+</div>
+
+</body>
+</html>
+
+
+
+<!--***********************************************************************************************-->
+
+
+
+
+
+
+
+<script language="JavaScript">
+$(document).ready(function() {  
+   var chart = {
+      backgroundColor: {
+          linearGradient: [0, 0, 500, 500],
+          stops: [
+              [0, 'rgb(255, 255, 255)'],
+              [1, 'rgb(200, 200, 255)']
+          ]
+      },
+      
+      type: 'column',
+	  events: {
+         load: function () {
+         	//$("#sum").click(function){setInterval()};
+            // set up the updating of the chart each second
+            var series = this.series[0];
+            setInterval(function () {
+               var data = [];
+               //data.push(['Dump',Math.random()]);
+               //data.push(['Disk Usage',Math.random()]);
+               //data.push(['CPU Load',Math.random()]);
+               //data.push(['CPU Rate',Math.random()]);
+               //data.push(['Memory Usage',Math.random()]);
+               
+               
+               
+               
+               
+               
+               
+               //{%csrf_token%}
+
+
+               //var ip = document.getElementById("ip_select").value;
+               var  myselect=document.getElementById("ip_select");
+               var index=myselect.selectedIndex ;
+               var ip = myselect.options[index].text;
+               //var_ip = '1234'
+               var post_data = {"ip":ip};
+               
+               $.ajax({
+               type:"POST",
+               url:"/ajax_cluster/",
+               data:post_data,
+               success:function(result){
+               		var dump = result['dump'];
+               		var disk_usage = result['disk_usage'];
+               		var cpu_load = result['cpu_load'];
+               		var cpu_rate = result['cpu_rate'];
+               		var memory_usage = result['memory_usage'];
+               		
+                    data.push(['Dump',dump]);
+                    data.push(['Disk Usage',disk_usage]);
+                    data.push(['CPU Load',cpu_load]);
+                    data.push(['CPU Rate',cpu_rate]);
+                    data.push(['Memory Usage',memory_usage]);               		
+               		//alert(dump);
+               		
+               		
+               		series.setData(data);
+               		
+               }
+               });
+               
+
+               //series.setData(data);
+               //series.addPoint([x, y], true, true);
+            }, 1000);
+            
+         }
+      }      
+      
+   };
+   var title = {
+      text: '集群运行状态统计图'   
+   };
+   var subtitle = {
+      text: 'Computer Cluster State Statistics'  
+   };
+   var xAxis = {
+      categories: ['Dump', 'Disk Usage', 'CPU Load', 'CPU Rate', 'Memory Usage'],
+      crosshair: true
+   };
+   var yAxis = {
+      min: 0,
+      title: {
+         text: '百分比 (%)'         
+      }      
+   };
+   var tooltip = {
+      headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+      pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+         '<td style="padding:0"><b>{point.y:.1f} %</b></td></tr>',
+      footerFormat: '</table>',
+      shared: true,
+      useHTML: true
+   };
+   var plotOptions = {
+      column: {
+         pointPadding: 0.2,
+         borderWidth: 0
+      }
+   };  
+   var credits = {
+      enabled: false
+   };
+   
+   var series= [{
+        name: '集群运行状态',
+        //data: {{temp}}
+        //data:[23,87,45,34,21]
+        }];     
+      
+   var json = {};   
+   json.chart = chart; 
+   json.title = title;   
+   json.subtitle = subtitle; 
+   json.tooltip = tooltip;
+   json.xAxis = xAxis;
+   json.yAxis = yAxis;  
+   json.series = series;
+   json.plotOptions = plotOptions;  
+   json.credits = credits;
+   $('#container').highcharts(json);
+  
+});
+</script>
+
+
+
+<script language="JavaScript">
+$(document).ready(function() {  
+   var chart = {
+      type: 'spline',
+	  animation: Highcharts.svg, // don't animate in IE < IE 10.
+      marginRight: 10,
+	  events: {
+         load: function () {
+         	//$("#sum").click(function){setInterval()};
+            // set up the updating of the chart each second
+            var series = this.series[0];
+            setInterval(function () {
+               var x = (new Date()).getTime(), // current time
+               y = Math.random();
+               
+               
+               
+               
+               
+               
+               
+               //{%csrf_token%}
+
+
+
+               //var ip = document.getElementById("ip_select").value;
+               var  myselect=document.getElementById("ip_select");
+               var index=myselect.selectedIndex ;
+               var ip = myselect.options[index].text;
+               var post_data = {"ip":ip};
+               $.ajax({
+               type:"POST",
+               url:"/ajax_index/",
+               data:post_data,
+               success:function(result){
+               //if(result.success)千万不能加这一行判断
+               	//{	//var cpu = {{cpu|safe}};
+               		//data = JSON.parse(result);
+               		
+               		
+               		//var data = $.parseJSON(result);
+               		//var cpu = data.cpu;
+               		var disk_usage = result['disk_usage'];
+               		//var time = result['time'];
+               		//alert(cpu+'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+               		series.addPoint([x, disk_usage], true, true);
+               		//}
+               }
+               });
+               
+
+               
+               
+          
+               
+               
+               
+               
+               
+               
+               //series.addPoint([x, y], true, true);
+            }, 1000);
+            
+         }
+      }
+   };
+   var title = {
+      text: 'Live Disk Usage'   
+   };   
+   var xAxis = {
+      type: 'datetime',
+      //type:'String'
+      tickPixelInterval: 150
+   };
+   var yAxis = {
+      title: {
+         text: 'Value'
+      },
+      plotLines: [{
+         //value: 0,
+         value:60,
+         //width: 1,
+         width:3,
+         //dashStyle: 'solid',
+         dashStyle: 'longdashdot',
+         //color: '#808080'
+         color: 'red'
+         
+      }]
+   };
+   var tooltip = {
+      formatter: function () {
+      return '<b>' + this.series.name + '</b><br/>' +
+         Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+         Highcharts.numberFormat(this.y, 2);
+      }
+   };
+   var plotOptions = {
+      area: {
+         pointStart: 1940,
+         marker: {
+            enabled: false,
+            symbol: 'circle',
+            radius: 2,
+            states: {
+               hover: {
+                 enabled: true
+               }
+            }
+         }
+      }
+   };
+   var legend = {
+      enabled: false
+   };
+   var exporting = {
+      enabled: false
+   };
+   var series= [{
+      name: 'Disk Usage',
+      data: (function () {
+         // generate an array of random data
+         var data = [],time = (new Date()).getTime(),i;
+         for (i = -19; i <= 0; i += 1) {
+            data.push({
+               x: time + i * 1000,
+               y: Math.random()
+               //y:0
+            });
+         }
+         return data;
+      }())    
+   }];     
+      
+   var json = {};   
+   json.chart = chart; 
+   json.title = title;     
+   json.tooltip = tooltip;
+   json.xAxis = xAxis;
+   json.yAxis = yAxis; 
+   json.legend = legend;  
+   json.exporting = exporting;   
+   json.series = series;
+   json.plotOptions = plotOptions;
+   
+   
+   Highcharts.setOptions({
+      global: {
+         useUTC: false
+      }
+   });
+   
+
+   
+   //$('#container').highcharts(json);
+   //下面是点击button触发画图过程，下一步就是从form的<input>中将IP直接传给highcharts
+   //用eval(document.getElementById("ip_addr")).value也可以取得<input>中的值
+   //$('#sum').click(function(){alert(document.getElementById("ip_addr").value);$('#container1').highcharts(json);});
+   $('#sum').click(function(){var  myselect=document.getElementById("ip_select");var index=myselect.selectedIndex ;var text = myselect.options[index].text;alert(text);$('#container1').highcharts(json);});
+  
+});
+</script>
+
+
+
+
+
+<script language="JavaScript">
+$(document).ready(function() {  
+   var chart = {
+      type: 'spline',
+	  animation: Highcharts.svg, // don't animate in IE < IE 10.
+      marginRight: 10,
+	  events: {
+         load: function () {
+         	//$("#sum").click(function){setInterval()};
+            // set up the updating of the chart each second
+            var series = this.series[0];
+            setInterval(function () {
+               var x = (new Date()).getTime(), // current time
+               y = Math.random();
+               
+               
+               
+               
+               
+               
+               
+               //{%csrf_token%}
+
+
+               //var ip = document.getElementById("ip_select").value;
+               var  myselect=document.getElementById("ip_select");
+               var index=myselect.selectedIndex ;
+               var ip = myselect.options[index].text;
+               var post_data = {"ip":ip};
+               $.ajax({
+               type:"POST",
+               url:"/ajax_index/",
+               data:post_data,
+               success:function(result){
+               //if(result.success)千万不能加这一行判断
+               	//{	//var cpu = {{cpu|safe}};
+               		//data = JSON.parse(result);
+               		
+               		
+               		//var data = $.parseJSON(result);
+               		//var cpu = data.cpu;
+               		var cpu_load = result['cpu_load'];
+               		//var time = result['time'];
+               		//alert(cpu+'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+               		series.addPoint([x, cpu_load], true, true);
+               		//}
+               }
+               });
+               
+
+               
+               
+          
+               
+               
+               
+               
+               
+               
+               //series.addPoint([x, y], true, true);
+            }, 1000);
+            
+         }
+      }
+   };
+   var title = {
+      text: 'Live CPU Load'   
+   };   
+   var xAxis = {
+      type: 'datetime',
+      //type:'String'
+      tickPixelInterval: 150
+   };
+   var yAxis = {
+      title: {
+         text: 'Value'
+      },
+      plotLines: [{
+         //value: 0,
+         value:60,
+         //width: 1,
+         width:3,
+         //dashStyle: 'solid',
+         dashStyle: 'longdashdot',
+         //color: '#808080'
+         color: 'red'
+      }]
+   };
+   var tooltip = {
+      formatter: function () {
+      return '<b>' + this.series.name + '</b><br/>' +
+         Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+         Highcharts.numberFormat(this.y, 2);
+      }
+   };
+   var plotOptions = {
+      area: {
+         pointStart: 1940,
+         marker: {
+            enabled: false,
+            symbol: 'circle',
+            radius: 2,
+            states: {
+               hover: {
+                 enabled: true
+               }
+            }
+         }
+      }
+   };
+   var legend = {
+      enabled: false
+   };
+   var exporting = {
+      enabled: false
+   };
+   var series= [{
+      name: 'CPU Load',
+      data: (function () {
+         // generate an array of random data
+         var data = [],time = (new Date()).getTime(),i;
+         for (i = -19; i <= 0; i += 1) {
+            data.push({
+               x: time + i * 1000,
+               y: Math.random()
+               //y:0
+            });
+         }
+         return data;
+      }())    
+   }];     
+      
+   var json = {};   
+   json.chart = chart; 
+   json.title = title;     
+   json.tooltip = tooltip;
+   json.xAxis = xAxis;
+   json.yAxis = yAxis; 
+   json.legend = legend;  
+   json.exporting = exporting;   
+   json.series = series;
+   json.plotOptions = plotOptions;
+   
+   
+   Highcharts.setOptions({
+      global: {
+         useUTC: false
+      }
+   });
+   
+
+   
+   //$('#container').highcharts(json);
+   //下面是点击button触发画图过程，下一步就是从form的<input>中将IP直接传给highcharts
+   //用eval(document.getElementById("ip_addr")).value也可以取得<input>中的值
+   $('#sum').click(function(){$('#container2').highcharts(json);});
+  
+});
+</script>
+
+
+
+
+
+
+<script language="JavaScript">
+$(document).ready(function() {  
+   var chart = {
+      type: 'spline',
+	  animation: Highcharts.svg, // don't animate in IE < IE 10.
+      marginRight: 10,
+	  events: {
+         load: function () {
+         	//$("#sum").click(function){setInterval()};
+            // set up the updating of the chart each second
+            var series = this.series[0];
+            setInterval(function () {
+               var x = (new Date()).getTime(), // current time
+               y = Math.random();
+               
+               
+               
+               
+               
+               
+               
+               //{%csrf_token%}
+
+
+               //var ip = document.getElementById("ip_select").value;
+               var  myselect=document.getElementById("ip_select");
+               var index=myselect.selectedIndex ;
+               var ip = myselect.options[index].text;
+               var post_data = {"ip":ip};
+               $.ajax({
+               type:"POST",
+               url:"/ajax_index/",
+               data:post_data,
+               success:function(result){
+               //if(result.success)千万不能加这一行判断
+               	//{	//var cpu = {{cpu|safe}};
+               		//data = JSON.parse(result);
+               		
+               		
+               		//var data = $.parseJSON(result);
+               		//var cpu = data.cpu;
+               		var cpu_rate = result['cpu_rate'];
+               		//var time = result['time'];
+               		//alert(cpu+'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+               		series.addPoint([x, cpu_rate], true, true);
+               		//}
+               }
+               });
+               
+
+               
+               
+          
+               
+               
+               
+               
+               
+               
+               //series.addPoint([x, y], true, true);
+            }, 1000);
+            
+         }
+      }
+   };
+   var title = {
+      text: 'Live CPU Rate'   
+   };   
+   var xAxis = {
+      type: 'datetime',
+      //type:'String'
+      tickPixelInterval: 150
+   };
+   var yAxis = {
+      title: {
+         text: 'Value'
+      },
+      plotLines: [{
+         value: 50,
+         width: 3,
+         //dashStyle: 'solid',
+         dashStyle: 'longdashdot',
+         //color: '#808080'
+         color: 'red'
+      }]
+   };
+   var tooltip = {
+      formatter: function () {
+      return '<b>' + this.series.name + '</b><br/>' +
+         Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+         Highcharts.numberFormat(this.y, 2);
+      }
+   };
+   var plotOptions = {
+      area: {
+         pointStart: 1940,
+         marker: {
+            enabled: false,
+            symbol: 'circle',
+            radius: 2,
+            states: {
+               hover: {
+                 enabled: true
+               }
+            }
+         }
+      }
+   };
+   var legend = {
+      enabled: false
+   };
+   var exporting = {
+      enabled: false
+   };
+   var series= [{
+      name: 'CPU Rate',
+      data: (function () {
+         // generate an array of random data
+         var data = [],time = (new Date()).getTime(),i;
+         for (i = -19; i <= 0; i += 1) {
+            data.push({
+               x: time + i * 1000,
+               y: Math.random()
+               //y:0
+            });
+         }
+         return data;
+      }())    
+   }];     
+      
+   var json = {};   
+   json.chart = chart; 
+   json.title = title;     
+   json.tooltip = tooltip;
+   json.xAxis = xAxis;
+   json.yAxis = yAxis; 
+   json.legend = legend;  
+   json.exporting = exporting;   
+   json.series = series;
+   json.plotOptions = plotOptions;
+   
+   
+   Highcharts.setOptions({
+      global: {
+         useUTC: false
+      }
+   });
+   
+
+   
+   //$('#container').highcharts(json);
+   //下面是点击button触发画图过程，下一步就是从form的<input>中将IP直接传给highcharts
+   //用eval(document.getElementById("ip_addr")).value也可以取得<input>中的值
+   $('#sum').click(function(){$('#container3').highcharts(json);});
+  
+});
+</script>
+
+
+
+
+
+<script language="JavaScript">
+$(document).ready(function() {  
+   var chart = {
+      type: 'spline',
+	  animation: Highcharts.svg, // don't animate in IE < IE 10.
+      marginRight: 10,
+	  events: {
+         load: function () {
+         	//$("#sum").click(function){setInterval()};
+            // set up the updating of the chart each second
+            var series = this.series[0];
+            setInterval(function () {
+               var x = (new Date()).getTime(), // current time
+               y = Math.random();
+               
+               
+               
+               
+               
+               
+               
+               //{%csrf_token%}
+
+
+               //var ip = document.getElementById("ip_select").value;
+               var  myselect=document.getElementById("ip_select");
+               var index=myselect.selectedIndex ;
+               var ip = myselect.options[index].text;
+               var post_data = {"ip":ip};
+               $.ajax({
+               type:"POST",
+               url:"/ajax_index/",
+               data:post_data,
+               success:function(result){
+               //if(result.success)千万不能加这一行判断
+               	//{	//var cpu = {{cpu|safe}};
+               		//data = JSON.parse(result);
+               		
+               		
+               		//var data = $.parseJSON(result);
+               		//var cpu = data.cpu;
+               		var memory_usage = result['memory_usage'];
+               		//var time = result['time'];
+               		//alert(cpu+'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+               		series.addPoint([x, memory_usage], true, true);
+               		//}
+               }
+               });
+               
+
+               
+               
+          
+               
+               
+               
+               
+               
+               
+               //series.addPoint([x, y], true, true);
+            }, 1000);
+            
+         }
+      }
+   };
+   var title = {
+      text: 'Live Memory Usage'   
+   };   
+   var xAxis = {
+      type: 'datetime',
+      //type:'String'
+      tickPixelInterval: 150
+   };
+   var yAxis = {
+      title: {
+         text: 'Value'
+      },
+      //plotLines:[{
+       //         color:'red',           //线的颜色，定义为红色
+        //        dashStyle:'solid',     //默认值，这里定义为实线
+        //        value:60,               //定义在那个值上显示标示线，这里是在x轴上刻度为3的值处垂直化一条线
+        //        width:2                //标示线的宽度，2px
+        //    }],
+      plotLines: [{
+         //value: 0,
+         value:18,
+         //width: 1,
+         width: 3,
+         dashStyle:'longdashdot',
+         //color: '#808080''#ED561B'
+         color: 'red'
+      }]
+   };
+   var tooltip = {
+      formatter: function () {
+      return '<b>' + this.series.name + '</b><br/>' +
+         Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+         Highcharts.numberFormat(this.y, 2);
+      }
+   };
+   var plotOptions = {
+      area: {
+         pointStart: 1940,
+         marker: {
+            enabled: false,
+            symbol: 'circle',
+            radius: 2,
+            states: {
+               hover: {
+                 enabled: true
+               }
+            }
+         }
+      }
+   };
+   var legend = {
+      enabled: false
+   };
+   var exporting = {
+      enabled: false
+   };
+   var series= [{
+      name: 'Memory Usage',
+      data: (function () {
+         // generate an array of random data
+         var data = [],time = (new Date()).getTime(),i;
+         for (i = -19; i <= 0; i += 1) {
+            data.push({
+               x: time + i * 1000,
+               y: Math.random()
+               //y:0
+            });
+         }
+         return data;
+      }())    
+   }];     
+      
+   var json = {};   
+   json.chart = chart; 
+   json.title = title;     
+   json.tooltip = tooltip;
+   json.xAxis = xAxis;
+   json.yAxis = yAxis; 
+   json.legend = legend;  
+   json.exporting = exporting;   
+   json.series = series;
+   json.plotOptions = plotOptions;
+   
+   
+   Highcharts.setOptions({
+      global: {
+         useUTC: false
+      }
+   });
+   
+
+   
+   //$('#container').highcharts(json);
+   //下面是点击button触发画图过程，下一步就是从form的<input>中将IP直接传给highcharts
+   //用eval(document.getElementById("ip_addr")).value也可以取得<input>中的值
+   $('#sum').click(function(){$('#container4').highcharts(json);});
+  
+});
+</script>
+
